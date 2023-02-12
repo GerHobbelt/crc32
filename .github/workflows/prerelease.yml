@@ -107,17 +107,17 @@ jobs:
         - build: linux
           os: ubuntu-22.04
           arch: x86_64
-          cc: [gcc]
+          cc: [g++]
 
 #        - build: linux-arm-aarch64
 #          os: ubuntu-22.04
 #          arch: aarch64
-#          cc: [gcc]
+#          cc: [g++]
           
 #        - build: linux-arm-v7
 #          os: ubuntu-22.04
 #          arch: armv7
-#          cc: [gcc]
+#          cc: [g++]
 
     steps:
     - name: Checkout repository
@@ -132,7 +132,7 @@ jobs:
     - name: Build release binary
       run: |
         mkdir bin
-        if [ "$CC" == "" ]; then CC=gcc ; fi
+        if [ "$CC" == "" ]; then CC=g++ ; fi
         $CC Crc32.cpp Crc32TestMultithreaded.cpp -o bin/${{ env.APP_NAME }}-${{ matrix.arch }} "$@"
         strip bin/${{ env.APP_NAME }}-${{ matrix.arch }}
         cd bin

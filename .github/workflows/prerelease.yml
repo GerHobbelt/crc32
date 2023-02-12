@@ -1,0 +1,147 @@
+#
+# crc32-cpp
+#
+name: pre-release
+on:
+  workflow_dispatch:
+#  push:
+#    # Enable when testing release infrastructure on a branch.
+#    # branches:
+#    # - ag/work
+#    tags:
+#    - "[0-9]+.[0-9]+.[0-9]+"
+env:
+  # Set to force version number, e.g., when no tag exists.
+  CRC32CPP_VERSION: v9
+  TAG_NAME: pre-v9
+  APP_NAME: crc32cpp
+  #CREATE_LS: true
+
+jobs:
+  build-windows:
+    name: Windows ${{ matrix.arch }}
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x64]
+        include:
+          - arch: x86
+            platform: Win32
+            pkg_suffix: x86
+
+          - arch: x64
+            platform: x64
+            suffix: .x64
+            pkg_suffix: x86_64
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Build Windows x86
+      if: matrix.arch == 'x86'
+      run: |
+        mkdir bin
+        echo "call ^" > cmd_compile.bat
+        echo '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"' >> cmd_compile.bat
+        echo "cl /Fo./bin/ Crc32.cpp Crc32TestMultithreaded.cpp /link /out:bin/${{ env.TAG_NAME }}-${{ matrix.arch }}.exe" >> cmd_compile.bat
+        type cmd_compile.bat
+        cmd /c cmd_compile.bat
+
+    - name: Build Windows x86 archive
+      if: matrix.arch == 'x86'
+      shell: bash      
+      run: |
+        cd bin
+        7z a ../${{ env.TAG_NAME }}-${{ matrix.arch }}.zip ${{ env.TAG_NAME }}-${{ matrix.arch }}.exe
+        cd ..
+        echo "ASSET=${{ env.TAG_NAME }}-${{ matrix.arch }}.zip" >> $GITHUB_ENV        
+        ls -l ${{ env.TAG_NAME }}-${{ matrix.arch }}.zip
+
+    - name: Build Windows x64
+      if: matrix.arch == 'x64'
+      run: |
+        mkdir bin
+        echo "call ^" > cmd_compile.bat
+        echo '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"' >> cmd_compile.bat
+        echo "cl /Fo./bin/ Crc32.cpp Crc32TestMultithreaded.cpp /link /out:bin/${{ env.TAG_NAME }}-${{ matrix.arch }}.exe" >> cmd_compile.bat
+        type cmd_compile.bat
+        cmd /c cmd_compile.bat
+        
+    - name: Build Windows x64 archive
+      if: matrix.arch == 'x64'
+      shell: bash
+      run: |
+        cd bin
+        7z a ../${{ env.TAG_NAME }}-${{ matrix.arch }}.zip ${{ env.TAG_NAME }}-${{ matrix.arch }}.exe
+        cd ..
+        echo "ASSET=${{ env.TAG_NAME }}-${{ matrix.arch }}.zip" >> $GITHUB_ENV                
+        ls -l ${{ env.TAG_NAME }}-${{ matrix.arch }}.zip
+
+    - name: Check Release
+      run: |
+        7z l ${{ env.ASSET }}
+
+    - name: Publish Release
+      uses: deep-soft/action-gh-release@v1
+      with:
+        prerelease: true
+        tag_name: ${{ env.TAG_NAME }}
+        files: |
+          ${{ env.ASSET }}
+
+  build-linux:
+    name: build-linux
+    runs-on: ${{ matrix.os }}
+#    env:
+#
+    strategy:
+      fail-fast: false
+      matrix:
+#        build: [linux, linux-arm-aarch64, linux-arm-v7]
+        build: [linux]
+        include:
+        - build: linux
+          os: ubuntu-22.04
+          arch: x86_64
+          cc: [gcc]
+
+#        - build: linux-arm-aarch64
+#          os: ubuntu-22.04
+#          arch: aarch64
+#          cc: [gcc]
+          
+#        - build: linux-arm-v7
+#          os: ubuntu-22.04
+#          arch: armv7
+#          cc: [gcc]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install packages (Ubuntu)
+      continue-on-error: true
+      if: matrix.os == 'ubuntu-22.04'
+      run: |
+        sh ci/ubuntu-install-packages
+
+    - name: Build release binary
+      run: |
+        mkdir bin
+        if [ "$CC" == "" ]; then CC=gcc ; fi
+        $CC Crc32.cpp Crc32TestMultithreaded.cpp -o bin/${{ env.TAG_NAME }}-${{ matrix.arch }} "$@"
+        strip bin/${{ env.TAG_NAME }}-${{ matrix.arch }}
+        cd bin
+        tar --exclude=*.tar* -cv ${{ env.TAG_NAME }}-${{ matrix.arch }} | xz -9 > ../${{ env.TAG_NAME }}-${{ matrix.arch }}.tar.xz
+        cd ..
+        echo "ASSET=${{ env.TAG_NAME }}-${{ matrix.arch }}.tar.xz" >> $GITHUB_ENV
+
+    - name: Publish Release
+      uses: deep-soft/action-gh-release@v1
+      with:
+        prerelease: true
+        tag_name: ${{ env.TAG_NAME }}
+        files: |
+          ${{ env.ASSET }}

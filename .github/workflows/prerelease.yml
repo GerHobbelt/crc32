@@ -45,7 +45,7 @@ jobs:
         mkdir bin
         echo "call ^" > cmd_compile.bat
         echo '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat"' >> cmd_compile.bat
-        echo "cl /Fo./bin/ Crc32.cpp Crc32TestMultithreaded.cpp /link /out:bin/${{ env.TAG_NAME }}-${{ matrix.arch }}.exe" >> cmd_compile.bat
+        echo "cl /Fo./bin/ Crc32.cpp Crc32TestMultithreaded.cpp /link /out:bin/${{ env.APP_NAME }}-${{ matrix.arch }}.exe" >> cmd_compile.bat
         type cmd_compile.bat
         cmd /c cmd_compile.bat
 
@@ -54,10 +54,11 @@ jobs:
       shell: bash      
       run: |
         cd bin
-        7z a ../${{ env.TAG_NAME }}-${{ matrix.arch }}.zip ${{ env.TAG_NAME }}-${{ matrix.arch }}.exe
+        ls -l
+        7z a ../${{ env.APP_NAME }}-${{ matrix.arch }}.zip ${{ env.APP_NAME }}-${{ matrix.arch }}.exe
         cd ..
-        echo "ASSET=${{ env.TAG_NAME }}-${{ matrix.arch }}.zip" >> $GITHUB_ENV        
-        ls -l ${{ env.TAG_NAME }}-${{ matrix.arch }}.zip
+        echo "ASSET=${{ env.APP_NAME }}-${{ matrix.arch }}.zip" >> $GITHUB_ENV        
+        ls -l ${{ env.APP_NAME }}-${{ matrix.arch }}.zip
 
     - name: Build Windows x64
       if: matrix.arch == 'x64'
@@ -65,7 +66,7 @@ jobs:
         mkdir bin
         echo "call ^" > cmd_compile.bat
         echo '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"' >> cmd_compile.bat
-        echo "cl /Fo./bin/ Crc32.cpp Crc32TestMultithreaded.cpp /link /out:bin/${{ env.TAG_NAME }}-${{ matrix.arch }}.exe" >> cmd_compile.bat
+        echo "cl /Fo./bin/ Crc32.cpp Crc32TestMultithreaded.cpp /link /out:bin/${{ env.APP_NAME }}-${{ matrix.arch }}.exe" >> cmd_compile.bat
         type cmd_compile.bat
         cmd /c cmd_compile.bat
         
@@ -74,10 +75,11 @@ jobs:
       shell: bash
       run: |
         cd bin
-        7z a ../${{ env.TAG_NAME }}-${{ matrix.arch }}.zip ${{ env.TAG_NAME }}-${{ matrix.arch }}.exe
+        ls -l        
+        7z a ../${{ env.APP_NAME }}-${{ matrix.arch }}.zip ${{ env.APP_NAME }}-${{ matrix.arch }}.exe
         cd ..
-        echo "ASSET=${{ env.TAG_NAME }}-${{ matrix.arch }}.zip" >> $GITHUB_ENV                
-        ls -l ${{ env.TAG_NAME }}-${{ matrix.arch }}.zip
+        echo "ASSET=${{ env.APP_NAME }}-${{ matrix.arch }}.zip" >> $GITHUB_ENV                
+        ls -l ${{ env.APP_NAME }}-${{ matrix.arch }}.zip
 
     - name: Check Release
       run: |
@@ -131,12 +133,12 @@ jobs:
       run: |
         mkdir bin
         if [ "$CC" == "" ]; then CC=gcc ; fi
-        $CC Crc32.cpp Crc32TestMultithreaded.cpp -o bin/${{ env.TAG_NAME }}-${{ matrix.arch }} "$@"
-        strip bin/${{ env.TAG_NAME }}-${{ matrix.arch }}
+        $CC Crc32.cpp Crc32TestMultithreaded.cpp -o bin/${{ env.APP_NAME }}-${{ matrix.arch }} "$@"
+        strip bin/${{ env.APP_NAME }}-${{ matrix.arch }}
         cd bin
-        tar --exclude=*.tar* -cv ${{ env.TAG_NAME }}-${{ matrix.arch }} | xz -9 > ../${{ env.TAG_NAME }}-${{ matrix.arch }}.tar.xz
+        tar --exclude=*.tar* -cv ${{ env.APP_NAME }}-${{ matrix.arch }} | xz -9 > ../${{ env.APP_NAME }}-${{ matrix.arch }}.tar.xz
         cd ..
-        echo "ASSET=${{ env.TAG_NAME }}-${{ matrix.arch }}.tar.xz" >> $GITHUB_ENV
+        echo "ASSET=${{ env.APP_NAME }}-${{ matrix.arch }}.tar.xz" >> $GITHUB_ENV
 
     - name: Publish Release
       uses: deep-soft/action-gh-release@v1

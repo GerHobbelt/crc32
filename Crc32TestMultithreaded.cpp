@@ -19,7 +19,7 @@
 // test code
 
 /// one gigabyte
-const size_t NumBytes = 1024*1024*1024;
+static const size_t NumBytes = 1024*1024*1024;
 
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -28,8 +28,10 @@ const size_t NumBytes = 1024*1024*1024;
 #include <ctime>
 #endif
 
+namespace {
+
 // timing
-static double seconds()
+double seconds(void)
 {
 #if defined(_WIN32) || defined(_WIN64)
   LARGE_INTEGER frequency, now;
@@ -110,8 +112,15 @@ bool testCombine(const char* data, size_t maxBytes = 1024)
   return ok;
 }
 
+}
 
-int main(int argc, char* argv[])
+
+#if defined(BUILD_MONOLITHIC)
+#define main   libcrc32_multithreaded_test_main
+#endif
+
+extern "C"
+int main(int argc, const char** argv)
 {
   // //////////////////////////////////////////////////////////
   printf("Please wait ...\n");

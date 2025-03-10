@@ -31,7 +31,7 @@ const size_t DefaultChunkSize = 4*1024;
 #endif
 
 // timing
-static double seconds()
+static double seconds(void)
 {
 #if defined(_WIN32) || defined(_WIN64)
   LARGE_INTEGER frequency, now;
@@ -45,8 +45,12 @@ static double seconds()
 #endif
 }
 
+#if defined(BUILD_MONOLITHIC)
+#define main   libcrc32_test_main
+#endif
 
-int main(int, char**)
+extern "C"
+int main(void)
 {
   printf("Please wait ...\n");
 
